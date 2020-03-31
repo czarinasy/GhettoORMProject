@@ -66,7 +66,7 @@ public class DaoInvocationHandler implements InvocationHandler {
 		{
 			select(method, args);
 		}
-	
+		//delete(method, proxy); //just used to test if the methods work
 		return null;
 	}
 	
@@ -147,21 +147,60 @@ public class DaoInvocationHandler implements InvocationHandler {
 	{
 // 		SAMPLE SQL		
 //  	DELETE FROM REGISTRATION WHERE ID=1
-		
-		
+
+//		
+		System.out.println("\n        DaoInvocationHandler.delete()");
 // 		Using the @MappedClass annotation from method
 		// get the required class 		
-		// use reflection to check all the fields for @Column
-		// find which field is the primary key
+		Class c = method.getDeclaringClass();
+		Annotation an = c.getAnnotation(MappedClass.class);
+		MappedClass mc = (MappedClass)an;	
+		Class reqClass = mc.clazz();
+		
+		Field fields[] = reqClass.getDeclaredFields();
+		String sqlString = "DELETE FROM REGISTRATION WHERE ID=";
+		Field pk = null;
+		for (Field f : fields)
+		{
+			Annotation[] fieldAnns = f.getDeclaredAnnotations();
+			for (Annotation a : fieldAnns)
+			{
+
+				// use reflection to check all the fields for @Column
+				if (a instanceof Column)
+				{
+					Annotation fieldAnn = f.getAnnotation(Column.class);
+					Column col = (Column)fieldAnn;
+					// find which field is the primary key
+					if (col.name().equals("pk"))
+					{
+						pk = f;
+						
+					}
+				}
+			}
+		}
+		System.out.println("        PRIMARY KEY: " + pk);
+		
 		// for the Object o parameter, get the value of the field and use this as the primary value 
+		Integer pv = null; //primary value
+//!!!!!!!!!!! EDIT THIS !!!!!!!!!!
+		//pv = f.getValue();
+		
 		// for the WHERE clause
-				// if the primary key field value is null, throw a RuntimeException("no pk value")
+		// if the primary key field value is null, throw a RuntimeException("no pk value")
+	
+		if (pv==null)
+		{
+			throw new RuntimeException("no pk value");
+		}
 		
-		
+		sqlString = sqlString + pv;
+		System.out.println("        SQL STATEMENT: " + sqlString);
 		// run the sql
-//		jdbc.runSQL(SQL STRING);
 		
-		System.out.println("        DaoInvocationHandler.delete()");
+		jdbc.runSQL(sqlString);
+		
 	}
 	
 	// handles @Save
